@@ -35,6 +35,16 @@ def forbidden(error):
     ), 403
 
 
+@bp.app_errorhandler(405)
+def wrong_method(error):
+    # Test log T09: typing /signout into the address bar showed Flask's own
+    # "Method Not Allowed" page.
+    return render_template(
+        "errors/error.html", heading="Use the button on the page",
+        message="This address only works from a button on the site, such as Sign out.",
+    ), 405
+
+
 @bp.app_errorhandler(404)
 def not_found(error):
     return render_template(

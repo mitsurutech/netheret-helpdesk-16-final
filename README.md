@@ -1,42 +1,22 @@
-# Netheret help desk, step 14: security and law
+# Netheret help desk, step 15: test log
 
 A teaching example. Over sixteen steps we build a help desk web app for
 Netheret, a made-up company that supports the IT of small businesses. This
-step adds protection against cross-site request forgery (CSRF), safer
-cookies and security headers, and a privacy notice for UK GDPR.
+step tests the whole app by hand, writes the results in a test log, and
+fixes what the testing found.
 
 ## What this step adds
 
-- `helpdesk/security.py`:
-  - a CSRF token written by hand: a random value kept in the session and
-    put in a hidden field in every POST form; `check_csrf` runs before every
-    request and answers "400 Bad Request" to a POST without the right token;
-  - security headers on every response: a Content Security Policy that only
-    allows our own scripts and styles, no framing, no type guessing.
-- The session cookie is `HttpOnly` and `SameSite=Lax`, and `Secure` when you
-  set `SESSION_COOKIE_SECURE=1` on a server with HTTPS.
-- `/privacy`: a privacy notice in plain words, linked from every page.
-- A plain-words page for "400 Bad Request".
-
-## Security so far, in one list
-
-| Risk | What the app does | Where |
-|------|-------------------|-------|
-| Stolen passwords | Only salted hashes are stored | `models.py` (`set_password`) |
-| Guessing who has an account | One message for any failed sign in | `auth.py` |
-| Session fixation | `session.clear()` when signing in | `auth.py` |
-| Tampered session cookie | Signed with a secret key from the environment | `__init__.py` |
-| Seeing other companies' data | Every customer query is limited to their company | `customer.py`, `tickets.py` |
-| Doing things your role should not | `@role_required` and checks in each action | `auth.py`, `jobs.py`, `tickets.py` |
-| Cross-site scripting (XSS) | Jinja escapes everything; no `|safe`; CSP | templates, `security.py` |
-| SQL injection | SQLAlchemy queries with parameters, never string building | everywhere |
-| Cross-site request forgery | Hand-written CSRF token on every POST form | `security.py` |
-| Clickjacking | `X-Frame-Options` and `frame-ancestors` | `security.py` |
-
-The law this touches: UK GDPR and the Data Protection Act 2018 (personal data,
-the privacy notice, keeping only what is needed), the Computer Misuse Act 1990
-(why access control matters) and the Equality Act 2010 (why accessibility is
-not optional).
+- `docs/test-log.md`: fifty tests, each with the requirement it checks, the
+  steps, what we expected, what actually happened, pass or fail, and the fix.
+- Six fixes, each with a comment in the code naming its test:
+  - T09: a friendly page when an address is used the wrong way (`main.py`);
+  - T21: resolved and closed requests can no longer be escalated
+    (`tickets.py`, `detail.html`);
+  - T30: the server checks the length of a job title (`jobs.py`);
+  - T32: the double booking message names the days (`jobs.py`);
+  - T36: cancelling a visit tells the customer (`jobs.py`);
+  - T41: article views count each person once per session (`articles.py`).
 
 ## Run it
 
@@ -48,17 +28,15 @@ python seed.py
 flask --app helpdesk run --debug
 ```
 
-Sign in with any demo account (demo password `password123`). View the page
-source of any form to see the hidden `csrf_token` field. To see the check
-work, open your browser's developer tools, delete the hidden field from a form
-and submit it: you get the "That did not work" page.
+Run `python seed.py` before testing, so your numbers match the test log.
+Every demo account uses the demo password `password123`.
 
 ## What to look at
 
-- `secrets.token_hex` makes the token: the `secrets` module is for values that
-  must be hard to guess, unlike `random`.
-- `secrets.compare_digest` compares the tokens safely.
-- `app.before_request` and `app.after_request` run code around every request
-  without changing each page.
+- The "Actual" column says what really happened, even when it was wrong.
+  A test log full of passes that nobody ran is worth nothing.
+- Many failures were found by sending something the page never offers. The
+  browser is not in charge of what the server receives.
+- Try a test of your own from the list at the end of the log.
 
 <!-- links -->

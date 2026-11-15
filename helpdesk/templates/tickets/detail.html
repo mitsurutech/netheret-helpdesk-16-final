@@ -90,7 +90,9 @@
 
     <section class="card" aria-labelledby="escalate-heading">
       <h3 id="escalate-heading">Escalate</h3>
-      {% if higher_tiers %}
+      {% if ticket.status in ["resolved", "closed"] %}
+      <p>This request is {{ ticket.status }}. To escalate it, reopen it first by adding an update with the status "Open".</p>
+      {% elif higher_tiers %}
       <form method="post" action="{{ url_for('tickets.escalate', ticket_id=ticket.id) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="field">

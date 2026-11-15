@@ -35,8 +35,13 @@ def search():
 @login_required
 def read(article_id):
     article = db.get_or_404(Article, article_id)
-    article.views += 1
-    db.session.commit()
+    # Count each person once per session. Test log T41: reloading the page,
+    # or pressing "Yes, this helped", added another view every time.
+    viewed = session.get("viewed_articles", [])
+    if article.id not in viewed:
+        article.views += 1
+        db.session.commit()
+        session["viewed_articles"] = viewed + [article.id]
     already_voted = article.id in session.get("helpful_votes", [])
     return render_template("kb/read.html", article=article, already_voted=already_voted)
 

@@ -91,6 +91,9 @@ def check_job_form(form):
     values["title"] = form.get("title", "").strip()
     if not values["title"]:
         errors["title"] = "Enter a title for the job."
+    elif len(values["title"]) > 150:
+        # Test log T30: only the browser's maxlength stopped long titles.
+        errors["title"] = "The title must be 150 characters or fewer."
     values["kind"] = form.get("kind")
     if values["kind"] not in JOB_KINDS:
         errors["kind"] = "Choose the kind of job."
@@ -120,9 +123,11 @@ def check_job_form(form):
         end = values["start"] + timedelta(minutes=values["duration"])
         clash = find_clash(engineer.id, values["start"], end)
         if clash:
+            # Test log T32: the dates are shown because a job can run past
+            # midnight, and "that day" was then wrong.
             errors["scheduled_start"] = (
                 f"{engineer.name} already has \"{clash.title}\" from "
-                f"{clash.scheduled_start:%H:%M} to {clash.scheduled_end:%H:%M} that day."
+                f"{clash.scheduled_start:%a %d %b %H:%M} to {clash.scheduled_end:%a %d %b %H:%M}."
             )
     return errors, values
 
@@ -216,11 +221,17 @@ def progress(job_id):
         return redirect(url_for("jobs.brief", job_id=job.id))
 
     finished_now = new_status == "done" and job.status != "done"
+    cancelled_now = new_status == "cancelled" and job.status != "cancelled"
     job.status = new_status
     job.notes = request.form.get("notes", "").strip()
     if finished_now and job.ticket:
         # Record the visit on the request's timeline for the help desk.
         add_update(job.ticket, f"On-site job \"{job.title}\" done. Notes: {job.notes or 'none'}", False)
+    if cancelled_now and job.ticket:
+        # Test log T36: the customer was told about the visit but not that it
+        # was cancelled.
+        add_update(job.ticket, f"The visit on {job.scheduled_start:%A %d %B at %H:%M} is cancelled. "
+                               "We will contact you to arrange another time.", True)
     db.session.commit()
     flash("Job updated.")
     return redirect(url_for("jobs.brief", job_id=job.id))

@@ -211,7 +211,11 @@ def escalate(ticket_id):
     ticket = db.get_or_404(Ticket, ticket_id)
     new_tier = request.form.get("tier", "")
     reason = request.form.get("reason", "").strip()
-    if not new_tier.isdigit() or int(new_tier) not in TIERS or int(new_tier) <= ticket.tier:
+    # Test log T21: a resolved or closed request could be escalated, which left
+    # it unassigned at a higher tier with nobody needing to act.
+    if ticket.status not in ["new", "open", "waiting"]:
+        flash("Only open requests can be escalated. Reopen it with an update first.")
+    elif not new_tier.isdigit() or int(new_tier) not in TIERS or int(new_tier) <= ticket.tier:
         flash("Choose a higher tier to escalate to.")
     elif not reason:
         flash("Say why the request is being escalated, so the next tier knows.")
