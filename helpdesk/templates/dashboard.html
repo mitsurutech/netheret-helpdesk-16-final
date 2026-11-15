@@ -31,10 +31,11 @@
     <li><a href="{{ url_for('kb.search') }}">Search the knowledge base</a></li>
   </ul>
   {% elif g.user.role in ["tier2", "tier3"] %}
+  {% set my_tier = 2 if g.user.role == "tier2" else 3 %}
   <p>Work on escalated requests.</p>
   <ul class="quick-links">
     <li><a href="{{ url_for('tickets.queue', assigned='me') }}">Requests assigned to me</a></li>
-    <li><a href="{{ url_for('tickets.queue', tier=g.user.role[-1]) }}">Everything at Tier {{ g.user.role[-1] }}</a></li>
+    <li><a href="{{ url_for('tickets.queue', tier=my_tier) }}">Everything at Tier {{ my_tier }}</a></li>
     <li><a href="{{ url_for('jobs.my_schedule') }}">My schedule and job briefs</a></li>
     <li><a href="{{ url_for('jobs.week') }}">The whole team's week</a></li>
   </ul>
