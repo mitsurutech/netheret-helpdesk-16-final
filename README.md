@@ -1,5 +1,7 @@
 # Netheret help desk, step 16: final
 
+[English](README.md) | [Français](README.fr.md) | [Español](README.es.md) | [日本語](README.ja.md) | [Deutsch](README.de.md)
+
 A teaching example. Over sixteen steps we built a help desk web app for
 Netheret, a made-up company that supports the IT of small businesses. This
 is the finished app, with its change log, sources and test log.
